@@ -1,0 +1,25 @@
+{
+  "name": "aspect",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.2",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/bun": "^1.1.10",
+    "@types/node": "^22.7.4",
+    "@types/uuid": "^10.0.0",
+    "bun": "^1.1.29",
+    "bun-types": "^1.1.29",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "uuid": "^10.0.0"
+  }
+}

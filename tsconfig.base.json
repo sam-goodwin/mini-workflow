@@ -1,0 +1,9 @@
+{
+  "extends": "@tsconfig/node20/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "types": ["@types/node", "@types/bun"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
+  }
+}

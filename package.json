@@ -9,9 +9,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "uuid": "^10.0.0"
+  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",
     "@tsconfig/node20": "^20.1.4",
+    "@types/aws-lambda": "^8.10.145",
     "@types/bun": "^1.1.10",
     "@types/node": "^22.7.4",
     "@types/uuid": "^10.0.0",
@@ -19,7 +23,10 @@
     "bun-types": "^1.1.29",
     "typescript": "^5.6.2"
   },
-  "dependencies": {
-    "uuid": "^10.0.0"
+  "optionalDependencies": {
+    "@aws-sdk/client-lambda": "^3.658.1",
+    "@aws-sdk/client-s3": "^3.658.1",
+    "@aws-sdk/client-sqs": "^3.658.1",
+    "@aws-sdk/client-scheduler": "^3.658.1"
   }
 }

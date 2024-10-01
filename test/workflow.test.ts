@@ -1,17 +1,11 @@
 import { expect, test } from "bun:test";
-
 import { workflow } from "../src/workflow.js";
-import { WorkflowRuntime } from "../src/runtime.js";
-import {
-  LocalHistoryStore,
-  LocalQueueService,
-  LocalWorkflowRuntime,
-} from "../src/backends/local.js";
+import { LocalRuntime } from "../src/local.js";
 
 export const testWorkflow = workflow("test", async (ctx, name: string) => {
   console.log("sleeping for 1 second");
 
-  await ctx.sleep(1, "s");
+  await ctx.sleep(1);
 
   const value = await ctx.task(async () => {
     return "some expensive value";
@@ -22,20 +16,16 @@ export const testWorkflow = workflow("test", async (ctx, name: string) => {
 
 test("run workflow", async () => {
   const stateDir = ".local";
-  const runtime = new LocalWorkflowRuntime(stateDir);
-  const result = await runtime.execute(testWorkflow, ["sam"]);
+  const runtime = new LocalRuntime(stateDir);
+  const result = await runtime.runLocallyToFinish(testWorkflow, ["sam"]);
   expect(result).toEqual("some expensive value");
 });
 
 test("emulate workflow responses", async () => {
-  const stateDir = ".local";
-  const runtime = new WorkflowRuntime(
-    new LocalHistoryStore(stateDir),
-    new LocalQueueService(),
-  );
-  const executionId = await runtime.start(testWorkflow, ["sam"]);
+  const runtime = new LocalRuntime(".local");
+  const executionId = await runtime.startExecution(testWorkflow, ["sam"]);
 
-  let execution = await runtime.continue(testWorkflow, executionId, [
+  let execution = await runtime.continueExecution(testWorkflow, executionId, [
     {
       kind: "response",
       type: "sleep",
@@ -58,7 +48,7 @@ test("emulate workflow responses", async () => {
     {
       kind: "request",
       type: "sleep",
-      duration: 1000,
+      seconds: 1,
       seq: 0,
     },
     {
@@ -78,7 +68,7 @@ test("emulate workflow responses", async () => {
   expect(execution.output).toBeUndefined();
 
   // emulate the task completing
-  execution = await runtime.continue(testWorkflow, executionId, [
+  execution = await runtime.continueExecution(testWorkflow, executionId, [
     {
       kind: "response",
       type: "task",

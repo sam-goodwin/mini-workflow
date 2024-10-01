@@ -1,6 +1,6 @@
 export interface ExecutionContext {
   task<T>(func: () => Promise<T>): Promise<T>;
-  sleep(duration: number, unit?: "ms" | "s"): Promise<void>;
+  sleep(seconds: number): Promise<void>;
 }
 
 export type WorkflowHandler<In extends any[], Out> = (
@@ -21,6 +21,8 @@ export interface Workflow<Name extends string, in In extends any[], Out> {
   handler: WorkflowHandler<In, Out>;
 }
 
+const globalWorkflows = new Map<string, Workflow<string, any[], any>>();
+
 export function workflow<
   Name extends string,
   F extends WorkflowHandler<any[], any>,
@@ -32,8 +34,28 @@ export function workflow<
   Parameters<F> extends [any, ...infer Rest] ? Rest : [],
   ReturnType<F>
 > {
-  return {
+  if (globalWorkflows.has(name)) {
+    throw new Error(`Workflow ${name} already exists`);
+  }
+  const workflow = {
     name,
     handler: func,
   };
+  globalWorkflows.set(name, workflow);
+  return workflow;
+}
+
+export function getWorkflowFromExecutionId(executionId: string) {
+  const [workflowName] = executionId.split(":");
+  return getWorkflow(workflowName);
+}
+
+export function getWorkflow<Name extends string>(name: Name) {
+  const workflow = globalWorkflows.get(name) as
+    | Workflow<Name, any[], any>
+    | undefined;
+  if (!workflow) {
+    throw new Error(`Workflow ${name} not found`);
+  }
+  return workflow;
 }

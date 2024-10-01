@@ -1,4 +1,3 @@
-import { ExecutionHistory } from "./backend";
 import {
   WorkflowEvent,
   isRequestEvent,
@@ -8,6 +7,7 @@ import {
   isResponseEvent,
 } from "./event";
 import { Result } from "./result";
+import { ExecutionHistory } from "./runtime";
 import { Workflow, ExecutionContext } from "./workflow";
 
 export interface OrchestrateResult<Out> {
@@ -70,13 +70,10 @@ export async function orchestrate<Name extends string, In extends any[], Out>(
   const requestCallbacks = new Map<number, [Callback, Callback]>();
 
   function appendRequestEvent(event: RequestEvent) {
-    console.log(`appendRequestEvent(${JSON.stringify(event, null, 2)})`);
+    // console.log(`appendRequestEvent(${JSON.stringify(event, null, 2)})`);
     const request = requestHistory.get(event.seq);
     if (request) {
       if (!isEventEqual(event, request)) {
-        console.log(
-          `Re-entrant error: mismatch of events at seq ${event.seq}:\n${JSON.stringify(event, null, 2)} != ${JSON.stringify(request, null, 2)}`,
-        );
         throw new Error(
           `Re-entrant error: mismatch of events at seq ${event.seq}:\n${JSON.stringify(event, null, 2)} != ${JSON.stringify(request, null, 2)}`,
         );
@@ -87,7 +84,7 @@ export async function orchestrate<Name extends string, In extends any[], Out>(
       emitEvents.push(event);
     }
 
-    console.log(`replayedEvents.push(${JSON.stringify(event, null, 2)})`);
+    // console.log(`replayedEvents.push(${JSON.stringify(event, null, 2)})`);
     replayedEvents.push(event);
 
     return new Promise<any>((resolve, reject) => {
@@ -105,12 +102,12 @@ export async function orchestrate<Name extends string, In extends any[], Out>(
         seq: seq++,
         func,
       }),
-    sleep: (duration: number, unit: "ms" | "s" = "ms"): Promise<void> =>
+    sleep: (seconds: number): Promise<void> =>
       appendRequestEvent({
         kind: "request",
         type: "sleep",
         seq: seq++,
-        duration: duration * (unit === "ms" ? 1 : 1000),
+        seconds,
       }),
   };
 
@@ -170,7 +167,7 @@ export async function orchestrate<Name extends string, In extends any[], Out>(
         // resolve the user's callbacks (schedule their continuation in the microtask queue)
         const [resolve, reject] = requestCallbacks.get(historyEvent.replyTo)!;
         if (historyEvent.type === "task") {
-          if ("error" in historyEvent) {
+          if (historyEvent.error) {
             reject(new Error(historyEvent.error));
           } else {
             resolve(historyEvent.result);
@@ -191,7 +188,6 @@ export async function orchestrate<Name extends string, In extends any[], Out>(
     // let any existing microtasks complete before returning
     // -> the user's final synchronous code (running after their final await) will return the result on the next event loop iteration
     setImmediate(() => {
-      console.log("finalResult", finalResult);
       resolve({
         output: finalResult as Result<Awaited<Out>>,
         events: emitEvents,

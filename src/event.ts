@@ -59,7 +59,7 @@ export function isEventEqual(
   }
 
   if (a.kind === "request" && a.type === "sleep") {
-    return a.duration === (b as SleepRequest).duration;
+    return a.seconds === (b as SleepRequest).seconds;
   }
   return true;
 }
@@ -68,7 +68,7 @@ export interface SleepRequest {
   kind: "request";
   type: "sleep";
   seq: number;
-  duration: number;
+  seconds: number;
 }
 
 export interface SleepResponse {

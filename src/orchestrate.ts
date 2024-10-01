@@ -168,6 +168,7 @@ export async function orchestrate<Name extends string, In extends any[], Out>(
         const [resolve, reject] = requestCallbacks.get(historyEvent.replyTo)!;
         if (historyEvent.type === "task") {
           if (historyEvent.error) {
+            console.log("rejecting task", historyEvent);
             reject(new Error(historyEvent.error));
           } else {
             resolve(historyEvent.result);

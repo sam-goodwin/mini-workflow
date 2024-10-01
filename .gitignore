@@ -3,3 +3,6 @@ lib
 .local
 dist
 Pulumi.*.yaml
+
+# sst
+.sst

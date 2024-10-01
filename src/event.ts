@@ -2,6 +2,12 @@ export type WorkflowEvent = RequestEvent | ResponseEvent;
 export type RequestEvent = SleepRequest | TaskRequest;
 export type ResponseEvent = SleepResponse | TaskResponse;
 
+export interface StartWorkflowEvent {
+  kind: "start";
+}
+
+export type EventLog = [StartWorkflowEvent, ...Serialized<WorkflowEvent>[]];
+
 export type UnorderedEvent = Unordered<TaskResponse> | Unordered<SleepResponse>;
 
 export type Unordered<E extends WorkflowEvent> = E extends TaskResponse

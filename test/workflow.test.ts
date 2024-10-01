@@ -27,6 +27,21 @@ test("emulate workflow responses", async () => {
 
   let execution = await runtime.continueExecution(testWorkflow, executionId, [
     {
+      kind: "start",
+    },
+  ]);
+
+  expect(execution.events).toMatchObject([
+    {
+      kind: "request",
+      type: "sleep",
+      seq: 0,
+      seconds: 1,
+    },
+  ]);
+
+  execution = await runtime.continueExecution(testWorkflow, executionId, [
+    {
       kind: "response",
       type: "sleep",
       replyTo: 0,

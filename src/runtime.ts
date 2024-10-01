@@ -2,6 +2,7 @@ import {
   RequestEvent,
   ResponseEvent,
   Serialized,
+  StartWorkflowEvent,
   TaskRequest,
   TaskResponse,
   Unordered,
@@ -47,7 +48,7 @@ export abstract class Runtime {
    */
   abstract sendEvent(
     executionId: ExecutionId,
-    event: Unordered<ResponseEvent>,
+    event: StartWorkflowEvent | Unordered<ResponseEvent>,
   ): Promise<void>;
 
   /**
@@ -91,11 +92,9 @@ export abstract class Runtime {
       output: undefined,
     });
 
-    await this.continueExecution(
-      workflow as Workflow<string, any[], Out>,
-      executionId,
-      [],
-    );
+    await this.sendEvent(executionId, {
+      kind: "start",
+    });
 
     return executionId;
   }
@@ -106,15 +105,20 @@ export abstract class Runtime {
   async continueExecution<In extends any[], Out>(
     workflow: Workflow<string, In, Out>,
     executionId: ExecutionId,
-    events: UnorderedEvent[],
+    events: (StartWorkflowEvent | UnorderedEvent)[],
   ): Promise<OrchestrateResult<Awaited<Out>>> {
+    // filter out the start event, we don't need to consider it (its only purpose is to initiate the workflow)
+    const unorderedEvents = events.filter(
+      (event): event is UnorderedEvent => event.kind !== "start",
+    );
+
     const execution = await this.getHistory<In, Out>(executionId);
 
-    const result = await orchestrate(workflow, execution, events);
+    const result = await orchestrate(workflow, execution, unorderedEvents);
 
     // scheduled all the latest requests (this must be idempotent with at-least-once semantic)
     //  ... duplicate task requests and responses are expected to be received by both the orchestrator and task executor
-    await this.scheduleTasks(executionId, result.events, events);
+    await this.scheduleTasks(executionId, result.events, unorderedEvents);
 
     // save the history to a strongly consistent store (e.g. s3 or a file system)
     await this.saveHistory(executionId, {

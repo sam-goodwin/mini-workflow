@@ -82,9 +82,16 @@ export class LocalRuntime extends Runtime {
           event.seconds * 1000,
         );
       } else {
-        this.executeTask(getWorkflowFromExecutionId(executionId), executionId, {
-          events: responseEvents,
-          request: event,
+        // emulate asynchronicity (use setImmediate to ensure this promise starts after all other handlers have completed)
+        setImmediate(() => {
+          this.executeTask(
+            getWorkflowFromExecutionId(executionId),
+            executionId,
+            {
+              events: responseEvents,
+              request: event,
+            },
+          );
         });
       }
     }

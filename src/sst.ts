@@ -20,7 +20,7 @@ export class WorkflowEngine extends pulumi.ComponentResource {
     },
     _opts?: pulumi.ComponentResourceOptions,
   ) {
-    super("aspect:Workflow", name, undefined, _opts);
+    super("mini:Workflow", name, undefined, _opts);
 
     const opts: pulumi.ComponentResourceOptions = {
       parent: this,

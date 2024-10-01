@@ -5,7 +5,7 @@ import { WorkflowEngine } from "./src/sst";
 export default $config({
   app(input) {
     return {
-      name: "aspect-example",
+      name: "mini-workflow-example",
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "aws",
       providers: {

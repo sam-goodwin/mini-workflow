@@ -29,6 +29,7 @@ export default $config({
       url: true,
       link: [engine.history, engine.events],
       environment: {
+        BUCKET_NAME: engine.history.name,
         QUEUE_URL: engine.events.url,
         QUEUE_ARN: engine.events.arn,
         WORKER_FUNCTION_NAME: engine.worker.name,

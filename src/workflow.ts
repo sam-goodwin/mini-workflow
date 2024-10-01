@@ -8,19 +8,12 @@ export type WorkflowHandler<In extends any[], Out> = (
   ...args: In
 ) => Promise<Out>;
 
-// export function execute(
-//   workflow: Workflow<string, any[], any>,
-//   task: SerializedTaskRequest,
-// ) {
-//   const runtime = new WorkflowRuntime();
-//   return runtime.startExecution(workflow, input);
-// }
-
 export interface Workflow<Name extends string, in In extends any[], Out> {
   name: Name;
   handler: WorkflowHandler<In, Out>;
 }
 
+// TODO(sam): i hate globals, should we force users to be explicit instead of implicit?
 const globalWorkflows = new Map<string, Workflow<string, any[], any>>();
 
 export function workflow<

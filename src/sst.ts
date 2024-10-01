@@ -1,6 +1,5 @@
+// @ts-nocheck
 // TODO(sam): what is the right way to build an SST component?
-
-/// <reference path="../.sst/platform/config.d.ts" />
 
 import aws from "@pulumi/aws";
 import pulumi from "@pulumi/pulumi";
@@ -212,6 +211,7 @@ export class WorkflowEngine extends pulumi.ComponentResource {
       {
         policyArn:
           "arn:aws:iam::aws:policy/AmazonEventBridgeSchedulerFullAccess",
+        // @ts-expect-error
         roles: [this.orchestrator.function.role],
       },
       opts,

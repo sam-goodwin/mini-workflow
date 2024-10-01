@@ -2,6 +2,9 @@
 
 This is a mini Temporal-like workflow engine for TypeScript implemented with pluggable backends for AWS (CloudFlare coming soon).
 
+> [!NOTE]
+> The code was build in a day and is not fully tested. The e2e example works, but there may be bugs.
+
 # Why
 
 It was built in response to Dax's relentless begging for a simple workflow engine that can run on AWS:

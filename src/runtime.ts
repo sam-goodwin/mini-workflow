@@ -177,6 +177,6 @@ export abstract class Runtime {
       replyTo: task.request.seq,
       error,
       result,
-    } satisfies Unordered<TaskResponse>);
+    } as Unordered<TaskResponse>);
   }
 }

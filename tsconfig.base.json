@@ -1,5 +1,6 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
+  "exclude": [".sst"],
   "compilerOptions": {
     "outDir": "lib",
     "types": ["@types/node", "@types/bun"],

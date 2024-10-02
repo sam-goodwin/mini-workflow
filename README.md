@@ -1,4 +1,4 @@
-# mini-workflow (name subject to change)
+# mini-workflow
 
 This is a mini Temporal-like workflow engine for TypeScript implemented with pluggable backends for AWS (CloudFlare coming soon).
 

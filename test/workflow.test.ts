@@ -16,13 +16,13 @@ export const testWorkflow = workflow("test", async (ctx, name: string) => {
 
 test("run workflow", async () => {
   const stateDir = ".local";
-  const runtime = new LocalRuntime(stateDir);
+  const runtime = new LocalRuntime({ stateDir });
   const result = await runtime.runLocallyToFinish(testWorkflow, ["sam"]);
   expect(result).toEqual("some expensive value");
 });
 
 test("emulate workflow responses", async () => {
-  const runtime = new LocalRuntime(".local");
+  const runtime = new LocalRuntime({ stateDir: ".local" });
   const executionId = await runtime.startExecution(testWorkflow, ["sam"]);
 
   let execution = await runtime.continueExecution(testWorkflow, executionId, [
@@ -88,7 +88,9 @@ test("emulate workflow responses", async () => {
       kind: "response",
       type: "task",
       replyTo: 2,
-      result: "some expensive value",
+      result: {
+        value: "some expensive value",
+      },
     },
   ]);
 

@@ -167,11 +167,11 @@ export async function orchestrate<Name extends string, In extends any[], Out>(
         // resolve the user's callbacks (schedule their continuation in the microtask queue)
         const [resolve, reject] = requestCallbacks.get(historyEvent.replyTo)!;
         if (historyEvent.type === "task") {
-          if (historyEvent.error) {
+          if (historyEvent.result.error) {
             console.log("rejecting task", historyEvent);
-            reject(new Error(historyEvent.error));
+            reject(new Error(historyEvent.result.error));
           } else {
-            resolve(historyEvent.result);
+            resolve(historyEvent.result.value);
           }
         } else {
           // resolve the timer

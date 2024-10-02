@@ -6,13 +6,24 @@ import {
   Unordered,
   UnorderedEvent,
 } from "./event.js";
-import { ExecutionHistory, Runtime } from "./runtime.js";
+import { ExecutionHistory, ExecutionId, Runtime } from "./runtime.js";
 import { Workflow, getWorkflowFromExecutionId } from "./workflow.js";
+import { Result } from "./result.js";
+
+export interface LocalRuntimeProps {
+  stateDir: string;
+  /**
+   * The local runtime supports two forms of execution of tasks:
+   * 1. where the {@link Runtime.executeTask} method is called directly (which replays the events all over again)
+   * 2. "fast mode" - where the function closure is executed directly (so that control flow is linear and not redundant)
+   */
+  disableFastTask?: boolean;
+}
 
 export class LocalRuntime extends Runtime {
   private readonly eventFifoQueue: Map<string, UnorderedEvent[]> = new Map();
 
-  constructor(private readonly stateDir: string) {
+  constructor(private readonly props: LocalRuntimeProps) {
     super();
   }
 
@@ -82,17 +93,37 @@ export class LocalRuntime extends Runtime {
           event.seconds * 1000,
         );
       } else {
-        // emulate asynchronicity (use setImmediate to ensure this promise starts after all other handlers have completed)
-        setImmediate(() => {
-          this.executeTask(
-            getWorkflowFromExecutionId(executionId),
-            executionId,
-            {
-              events: responseEvents,
-              request: event,
-            },
-          );
-        });
+        if (this.props.disableFastTask) {
+          // emulate asynchronicity (use setImmediate to ensure this promise starts after all other handlers have completed)
+          setImmediate(() => {
+            this.executeTask(
+              getWorkflowFromExecutionId(executionId),
+              executionId,
+              {
+                events: responseEvents,
+                request: event,
+              },
+            );
+          });
+        } else {
+          // eagerly execute the task so that control flow is uninterrupted
+          let result: Result<any>;
+          try {
+            result = {
+              value: await event.func(),
+            };
+          } catch (e: any) {
+            result = {
+              error: e.toString(),
+            };
+          }
+          await this.sendEvent(executionId, {
+            kind: "response",
+            type: event.type,
+            replyTo: event.seq,
+            result,
+          });
+        }
       }
     }
   }
@@ -110,14 +141,27 @@ export class LocalRuntime extends Runtime {
     executionId: string,
     history: ExecutionHistory<any[], any>,
   ): Promise<void> {
-    await fs.mkdir(this.stateDir, { recursive: true });
+    await fs.mkdir(this.props.stateDir, { recursive: true });
     await fs.writeFile(
       this.getExecutionFilePath(executionId),
       JSON.stringify(history, null, 2),
     );
   }
 
+  async listExecutions(filters?: {
+    workflowName?: string;
+  }): Promise<ExecutionId[]> {
+    const files = await fs.readdir(this.props.stateDir);
+    const executionIds = files.map((file) => file.split(".")[0]);
+    if (filters?.workflowName) {
+      return executionIds.filter((id) =>
+        id.startsWith(`${filters.workflowName}:`),
+      );
+    }
+    return executionIds;
+  }
+
   private getExecutionFilePath(executionId: string): string {
-    return path.join(this.stateDir, `${executionId}.json`);
+    return path.join(this.props.stateDir, `${executionId}.json`);
   }
 }

@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import {
   SchedulerClient,
@@ -18,7 +19,12 @@ import {
 import { v4 as uuid } from "uuid";
 import type { SQSEvent, Context } from "aws-lambda";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { ExecutionHistory, Runtime, TaskEnvelope } from "./runtime.js";
+import {
+  ExecutionHistory,
+  ExecutionId,
+  Runtime,
+  TaskEnvelope,
+} from "./runtime.js";
 import { getWorkflowFromExecutionId } from "./workflow.js";
 
 export interface InvokeLambdaRequest {
@@ -30,8 +36,8 @@ export class AWSRuntime extends Runtime {
   private readonly bucketName: string;
   private readonly objectPrefix: string;
   private readonly roleArn?: string;
-  private readonly fifoQueueUrl: string;
-  private readonly fifoQueueArn: string;
+  private readonly fifoQueueUrl?: string;
+  private readonly fifoQueueArn?: string;
   private readonly timerQueueUrl?: string;
   private readonly workerFunctionName?: string;
 
@@ -43,8 +49,8 @@ export class AWSRuntime extends Runtime {
     bucketName: string;
     objectPrefix: string;
     roleArn?: string;
-    fifoQueueUrl: string;
-    fifoQueueArn: string;
+    fifoQueueUrl?: string;
+    fifoQueueArn?: string;
     timerQueueUrl?: string;
     workerFunctionName?: string;
     sqsClient?: SQSClient;
@@ -93,6 +99,7 @@ export class AWSRuntime extends Runtime {
   }
 
   public async execute(event: InvokeLambdaRequest, context: Context) {
+    console.log("execute", JSON.stringify(event, null, 2));
     const workflow = getWorkflowFromExecutionId(event.executionId);
 
     await this.executeTask(workflow, event.executionId, event.task);
@@ -180,8 +187,6 @@ export class AWSRuntime extends Runtime {
           } else {
             const formattedTime = scheduledTime.toISOString().slice(0, 19);
 
-            console.log(`at(${formattedTime})`);
-
             await this.schedulerClient.send(
               new CreateScheduleCommand({
                 Name: uuid(),
@@ -267,6 +272,31 @@ export class AWSRuntime extends Runtime {
     } catch (error) {
       throw new Error(`Failed to save execution history: ${executionId}`);
     }
+  }
+
+  async listExecutions(filters?: {
+    workflowName?: string;
+  }): Promise<ExecutionId[]> {
+    const prefix = filters?.workflowName
+      ? `${this.objectPrefix}${filters.workflowName}:`
+      : this.objectPrefix;
+
+    const command = new ListObjectsV2Command({
+      Bucket: this.bucketName,
+      Prefix: prefix,
+      MaxKeys: 1000,
+    });
+
+    const response = await this.s3Client.send(command);
+    return (response.Contents || [])
+      .map((obj) => obj.Key)
+      .filter((key): key is string => key !== undefined)
+      .filter((key) => key.endsWith(".json"))
+      .map((key) => key.slice(this.objectPrefix.length, -5)) // Remove prefix and '.json'
+      .filter((id) => {
+        const parts = id.split(":");
+        return parts.length === 2 && parts[0].length > 0 && parts[1].length > 0;
+      });
   }
 
   private getObjectKey(executionId: string): string {

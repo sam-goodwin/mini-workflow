@@ -1,3 +1,5 @@
+import { Result } from "./result";
+
 export type WorkflowEvent = RequestEvent | ResponseEvent;
 export type RequestEvent = SleepRequest | TaskRequest;
 export type ResponseEvent = SleepResponse | TaskResponse;
@@ -97,7 +99,7 @@ export interface TaskRequest {
   func: () => Promise<any>;
 }
 
-export type TaskResponse = {
+export type TaskResponse<Out = any> = {
   kind: "response";
   type: "task";
   seq: number;
@@ -105,13 +107,5 @@ export type TaskResponse = {
    * Sequence number of the {@link TaskRequest} this corresponds to.
    */
   replyTo: number;
-} & (
-  | {
-      result: any;
-      error?: never;
-    }
-  | {
-      error: string;
-      result?: never;
-    }
-);
+  result: Result<Out>;
+};

@@ -19,7 +19,8 @@ Also, because durable workflow orchestration is a powerful primitive for event-d
 
 # Example
 
-- See the [example/index.ts](./example/index.ts) file for the runtime code (code that runs in AWS).
+- See the [example/index.ts](./example/index.ts) file for the Lambda Function entrypoint.
+- See the [example/workflow.ts](./example/workflow.ts) file for the workflow implementation.
 - See the [sst.config.ts](./sst.config.ts) file for infrastructure configuration.
 
 # Usage
@@ -70,4 +71,15 @@ export const uploadObjectWorkflow = workflow(
     return response;
   }
 );
+```
+
+# Debug
+
+Replay events in a Javascript Debug Terminal to step-through debug a workflow that ran in AWS (or is still running).
+
+```sh
+bun ./src/cli.ts replay \
+  --main ./example/workflow.ts \
+  --bucket-name <bucket-name>  \
+  --execution-id <execution-id>
 ```

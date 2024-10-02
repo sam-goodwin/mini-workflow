@@ -8,6 +8,7 @@ import {
   Unordered,
   UnorderedEvent,
   WorkflowEvent,
+  isResponseEvent,
 } from "./event";
 import { OrchestrateResult, orchestrate } from "./orchestrate";
 import { Result } from "./result";
@@ -34,6 +35,10 @@ export abstract class Runtime {
   abstract getHistory<In extends any[], Out>(
     executionId: ExecutionId,
   ): Promise<ExecutionHistory<In, Out>>;
+
+  abstract listExecutions(filters?: {
+    workflowName?: string;
+  }): Promise<ExecutionId[]>;
 
   /**
    * Save the history of a workflow execution to a strongly consistent store (e.g. s3 or a file system)
@@ -106,13 +111,14 @@ export abstract class Runtime {
     workflow: Workflow<string, In, Out>,
     executionId: ExecutionId,
     events: (StartWorkflowEvent | UnorderedEvent)[],
+    history?: ExecutionHistory<In, Out>,
   ): Promise<OrchestrateResult<Awaited<Out>>> {
     // filter out the start event, we don't need to consider it (its only purpose is to initiate the workflow)
     const unorderedEvents = events.filter(
       (event): event is UnorderedEvent => event.kind !== "start",
     );
 
-    const execution = await this.getHistory<In, Out>(executionId);
+    const execution = history ?? (await this.getHistory<In, Out>(executionId));
 
     const result = await orchestrate(workflow, execution, unorderedEvents);
 
@@ -141,13 +147,27 @@ export abstract class Runtime {
     // since tasks are closures (ctx.task(async () => { ... })), we need to reify the task request
 
     // by first getting the history
-    const execution = await this.getHistory<In, Out>(executionId);
+    const history = await this.getHistory<In, Out>(executionId);
+
+    const replyMap = new Map(
+      history.events
+        .filter(isResponseEvent)
+        .map((event) => [event.replyTo, event]),
+    );
+
+    const taskEvents = task.events.filter(
+      (event) => !replyMap.has(event.replyTo),
+    );
+
+    console.log("history", JSON.stringify(history, null, 2));
+
+    console.log("events", JSON.stringify(taskEvents, null, 2));
 
     // and then advancing the workflow to the point where the task is executed
-    const { history } = await orchestrate(workflow, execution, task.events);
+    const orchestrateResult = await orchestrate(workflow, history, taskEvents);
 
     // we can now find the reified closure on the task request
-    const func = history.find(
+    const func = orchestrateResult.history.find(
       (event): event is TaskRequest =>
         event.type === "task" &&
         event.kind === "request" &&
@@ -159,24 +179,31 @@ export abstract class Runtime {
     // - should not be a problem for workflows with a low number of events (e.g. a thousand or so)
 
     if (!func) {
-      console.log("looking for task", task, history);
+      console.log("looking for task", task, orchestrateResult.history);
       throw new Error("task not found");
     }
 
     let error: string | undefined = undefined;
-    let result: Awaited<Out> | undefined = undefined;
+    let value: Awaited<Out> | undefined = undefined;
     try {
-      result = await func();
+      value = await func();
     } catch (error: any) {
       // TODO(sam): is this the best way to serialize errors?
       error = error.toString();
     }
-    this.sendEvent(executionId, {
+
+    const response = {
       kind: "response",
       type: "task",
       replyTo: task.request.seq,
-      error,
-      result,
-    } as Unordered<TaskResponse>);
+      result: {
+        error,
+        value,
+      },
+    } as Unordered<TaskResponse>;
+
+    console.log("response", JSON.stringify(response, null, 2));
+
+    await this.sendEvent(executionId, response);
   }
 }

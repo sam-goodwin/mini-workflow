@@ -2,7 +2,13 @@
   "name": "mini-workflow",
   "version": "0.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    }
+  },
   "scripts": {
     "build": "tsc -b",
     "test": "bun test"

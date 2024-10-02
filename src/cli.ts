@@ -1,9 +1,9 @@
 import yargs from "yargs";
 import type { Argv } from "yargs";
 import { hideBin } from "yargs/helpers";
-import { replay } from "./replay";
-import { AWSRuntime } from "./aws";
-import { LocalRuntime } from "./local";
+import { replay } from "./replay.js";
+import { AWSRuntime } from "./aws.js";
+import { LocalRuntime } from "./local.js";
 
 yargs(hideBin(process.argv))
   .command(

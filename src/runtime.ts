@@ -9,10 +9,10 @@ import {
   UnorderedEvent,
   WorkflowEvent,
   isResponseEvent,
-} from "./event";
-import { OrchestrateResult, orchestrate } from "./orchestrate";
-import { Result } from "./result";
-import { Workflow } from "./workflow";
+} from "./event.js";
+import { OrchestrateResult, orchestrate } from "./orchestrate.js";
+import { Result } from "./result.js";
+import { Workflow } from "./workflow.js";
 import { v4 as uuid } from "uuid";
 
 export type ExecutionId = string;

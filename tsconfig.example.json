@@ -1,8 +1,8 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["src/**/*.ts", "example/**/*.ts"],
+  "include": ["example/**/*.ts"],
   "compilerOptions": {
-    "outDir": "example/dist",
+    "outDir": "lib.example",
     "module": "ESNext",
     "moduleResolution": "Bundler"
   }

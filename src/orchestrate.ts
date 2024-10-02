@@ -5,10 +5,10 @@ import {
   isEventEqual,
   UnorderedEvent,
   isResponseEvent,
-} from "./event";
-import { Result } from "./result";
-import { ExecutionHistory } from "./runtime";
-import { Workflow, ExecutionContext } from "./workflow";
+} from "./event.js";
+import { Result } from "./result.js";
+import { ExecutionHistory } from "./runtime.js";
+import { Workflow, ExecutionContext } from "./workflow.js";
 
 export interface OrchestrateResult<Out> {
   /**

@@ -78,7 +78,7 @@ export const uploadObjectWorkflow = workflow(
 Replay events in a Javascript Debug Terminal to step-through debug a workflow that ran in AWS (or is still running).
 
 ```sh
-bun ./src/cli.ts replay \
+npx tsx ./src/cli.ts replay \
   --main ./example/workflow.ts \
   --bucket-name <bucket-name>  \
   --execution-id <execution-id>

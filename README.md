@@ -5,18 +5,6 @@ This is a mini Temporal-like workflow engine for TypeScript implemented with plu
 > [!CAUTION]
 > The code was build in a day and is not fully tested. The e2e example works, but there may be bugs.
 
-# Why
-
-It was built in response to Dax's relentless begging for a simple workflow engine that can run on AWS:
-
-> please someone build a workflow engine as a library that can be backed by various stores
->
-> i am telling you this will become one of the most used packages ever - it eliminates the need for so much
->
-> - https://x.com/thdxr/status/1840858283168710884
-
-Also, because durable workflow orchestration is a powerful primitive for event-driven systems and can be trivially implemented with AWS Lambda, S3, SQS and Event Bridge.
-
 # Example
 
 - See the [example/index.ts](./example/index.ts) file for the Lambda Function entrypoint.
@@ -83,3 +71,5 @@ npx tsx ./src/cli.ts replay \
   --bucket-name <bucket-name>  \
   --execution-id <execution-id>
 ```
+
+https://github.com/user-attachments/assets/fba13d37-60bd-4f8d-a276-a345e4415614
